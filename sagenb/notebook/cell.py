@@ -1415,7 +1415,7 @@ class Cell(Cell_generic):
                 else:
                     break
             elif line in ['%auto', '%hide', '%hideall', '%save_server',
-                          '%time', '%timeit']:
+                          '%time', '%timeit', '%prun']:
                 # We do not consider any of the above percent
                 # directives as specifying a system.
                 directives.append(line[1:])
@@ -2058,7 +2058,7 @@ class Cell(Cell_generic):
         """
         self._introspect = [before_prompt, after_prompt]
 
-    def evaluate(self, introspect=False, time=None, username=None):
+    def evaluate(self, introspect=False, time=None, username=None, prun=None):
         r"""
         Evaluates this compute cell.
 
@@ -2072,6 +2072,9 @@ class Cell(Cell_generic):
 
         - ``username`` - a string (default: None); name of user doing
           the evaluation
+
+        - ``prun`` a boolean (default: None); whether to show profiling
+          information for the computation
 
         EXAMPLES:
 
@@ -2103,6 +2106,8 @@ class Cell(Cell_generic):
         self._evaluated = True
         if time is not None:
             self._time = time
+        if prun is not None:
+            self._prun = prun
         self._introspect = introspect
         self.worksheet().enqueue(self, username=username)
         self._type = 'wrap'
@@ -2206,6 +2211,27 @@ class Cell(Cell_generic):
 #        return template(os.path.join('html', 'notebook', 'cell.html'),
 #                        cell=self, wrap=wrap, div_wrap=div_wrap,
 #                        do_print=do_print, publish=publish)
+
+    def prun(self):
+        r"""
+        Returns whether to print profiling information about the
+        evaluation of this compute cell.
+
+        OUTPUT:
+
+        - a boolean
+
+        EXAMPLES::
+
+            sage: C = sagenb.notebook.cell.Cell(0, '2+3', '5', None)
+            sage: C.prun()
+            False
+            sage: C = sagenb.notebook.cell.Cell(0, '%prun\n2+3', '5', None)
+            sage: C.prun()
+            True
+        """
+        return ('prun' in self.percent_directives() or
+                getattr(self, '_prun', False))
 
     def url_to_self(self):
         """
